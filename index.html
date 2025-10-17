@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gửi Em Yêu Dấu 💌</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap');
+
+        body {
+            font-family: 'Noto Serif', 'Times New Roman', serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Hiệu ứng tim rơi */
+        .heart {
+            position: absolute;
+            font-size: 20px;
+            animation: fall 8s linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes fall {
+            0% {
+                opacity: 1;
+                transform: translateY(-10vh) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(110vh) rotate(360deg);
+            }
+        }
+
+        /* Container chính */
+        .container {
+            position: relative;
+            width: 400px;
+            height: 300px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .container:hover {
+            transform: scale(1.05);
+        }
+
+        .container.opened {
+            cursor: default;
+        }
+
+        .container.opened:hover {
+            transform: scale(1);
+        }
+
+        /* Phong bì */
+        .envelope {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .envelope-back {
+            position: absolute;
+            width: 100%;
+            height: 200px;
+            background: #f9e4d4;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            top: 0;
+        }
+
+        .envelope-flap {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 200px solid transparent;
+            border-right: 200px solid transparent;
+            border-bottom: 150px solid #f4d0b8;
+            transform-origin: top center;
+            transition: transform 0.6s ease-in-out;
+            z-index: 100;
+            top: 0;
+            left: 0;
+        }
+
+        .envelope.open .envelope-flap {
+            transform: rotateX(180deg);
+            z-index: 1;
+        }
+
+        .envelope-front {
+            position: absolute;
+            width: 100%;
+            height: 200px;
+            background: #f9e4d4;
+            top: 150px;
+            border-radius: 0 0 20px 20px;
+            z-index: 50;
+            transition: opacity 0.6s ease-in-out;
+        }
+
+        .envelope.open .envelope-front {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Lá thư - ẨN HOÀN TOÀN ban đầu */
+        .letter {
+            position: fixed;
+            width: 350px;
+            height: 450px;
+            background: #fff;
+            border-radius: 15px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, 80%);
+            box-shadow: 0 5px 30px rgba(0,0,0,0.2);
+            padding: 40px 30px;
+            overflow-y: auto;
+            z-index: 5;
+            opacity: 0;
+            transition: all 0.8s ease-in-out;
+        }
+
+        .envelope.open .letter {
+            transform: translate(-50%, -50%);
+            opacity: 1;
+            z-index: 200;
+        }
+
+        /* Nội dung thư */
+        .letter-content {
+            opacity: 0;
+            transition: opacity 1s ease-in-out 0.8s;
+        }
+
+        .envelope.open .letter-content {
+            opacity: 1;
+        }
+
+        .letter h2 {
+            color: #e63946;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 28px;
+        }
+
+        .letter p {
+            color: #333;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .typing-text {
+            border-right: 2px solid #e63946;
+            white-space: nowrap;
+            overflow: hidden;
+            display: inline-block;
+            animation: blink 0.7s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% { border-color: transparent; }
+        }
+
+        .signature {
+            text-align: right;
+            font-style: italic;
+            margin-top: 30px;
+            color: #666;
+        }
+
+        /* Nút bấm */
+        .instruction {
+            position: absolute;
+            bottom: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 18px;
+            text-align: center;
+            animation: pulse 2s infinite;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            width: 100%;
+            transition: opacity 0.3s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .instruction.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Nút phát nhạc */
+        .music-control {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
+            font-size: 24px;
+            z-index: 1000;
+        }
+
+        .music-control:hover {
+            transform: scale(1.1);
+        }
+
+        .music-control.playing {
+            animation: rotate 3s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Phong bì và thư -->
+    <div class="container" id="envelope-container">
+        <div class="envelope" id="envelope">
+            <div class="envelope-back"></div>
+            <div class="envelope-front"></div>
+            <div class="envelope-flap"></div>
+            <div class="letter">
+                <div class="letter-content">
+                    <h2>Gửi Em Yêu Dấu 💕</h2>
+                    <p>Chào em của anh,</p>
+                    <p>Có lẽ anh không giỏi lắm trong việc bày tỏ cảm xúc bằng lời nói, nhưng hôm nay anh muốn viết những dòng này để em biết rằng em quan trọng với anh như thế nào.</p>
+                    <p>Mỗi ngày được ở bên em là một ngày tuyệt vời nhất. Nụ cười của em là động lực để anh cố gắng mỗi ngày. Giọng nói của em là giai điệu êm dịu nhất anh từng nghe.</p>
+                    <p>Anh biết đôi khi anh có thể hơi ngớ ngẩn, có thể làm em bực mình, nhưng điều duy nhất anh chắc chắn là:</p>
+                    <p><strong><span class="typing-text" id="typing">Đơn giản vì anh yêu em ❤️</span></strong></p>
+                    <p>Cảm ơn em đã đến bên anh. Anh hứa sẽ luôn cố gắng để trở thành phiên bản tốt nhất của chính mình, xứng đáng với em.</p>
+                    <div class="signature">
+                        Yêu em nhiều lắm,<br>
+                        Người của em 💝
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="instruction" id="instruction">✨ Nhấn vào phong bì để mở thư nhé ✨</div>
+    </div>
+
+    <!-- Nút điều khiển nhạc -->
+    <div class="music-control" id="music-btn" title="Bật/Tắt nhạc">
+        🎵
+    </div>
+
+    <!-- Audio -->
+    <audio id="background-music" loop>
+        <source src="https://cdn.pixabay.com/audio/2022/03/10/audio_4a8f35de3e.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Tạo tim rơi
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = (Math.random() * 3 + 5) + 's';
+            heart.style.fontSize = (Math.random() * 20 + 15) + 'px';
+            document.body.appendChild(heart);
+            
+            setTimeout(() => heart.remove(), 8000);
+        }
+
+        setInterval(createHeart, 400);
+
+        // Mở phong bì
+        const envelope = document.getElementById('envelope');
+        const container = document.getElementById('envelope-container');
+        const instruction = document.getElementById('instruction');
+        const music = document.getElementById('background-music');
+        const musicBtn = document.getElementById('music-btn');
+        let isOpen = false;
+        let isMusicPlaying = false;
+
+        container.addEventListener('click', function() {
+            if (!isOpen) {
+                envelope.classList.add('open');
+                container.classList.add('opened');
+                instruction.classList.add('hidden');
+                isOpen = true;
+                
+                // Tự động phát nhạc khi mở thư
+                setTimeout(() => {
+                    music.play().then(() => {
+                        isMusicPlaying = true;
+                        musicBtn.classList.add('playing');
+                    }).catch(e => {
+                        console.log('Autoplay bị chặn, cần tương tác người dùng');
+                    });
+                }, 800);
+                
+                // Hiệu ứng đánh máy
+                setTimeout(() => {
+                    typeWriter();
+                }, 1500);
+            }
+        });
+
+        // Điều khiển nhạc
+        musicBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (isMusicPlaying) {
+                music.pause();
+                musicBtn.classList.remove('playing');
+                musicBtn.innerHTML = '🔇';
+            } else {
+                music.play();
+                musicBtn.classList.add('playing');
+                musicBtn.innerHTML = '🎵';
+            }
+            isMusicPlaying = !isMusicPlaying;
+        });
+
+        // Hiệu ứng đánh máy
+        function typeWriter() {
+            const text = "Đơn giản vì anh yêu em ❤️";
+            const element = document.getElementById('typing');
+            element.innerHTML = '';
+            let i = 0;
+            
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(type, 100);
+                }
+            }
+            
+            type();
+        }
+    </script>
+</body>
+</html>
