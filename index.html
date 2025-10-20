@@ -2,8 +2,8 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gửi Em Yêu Dấu 💌</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Thư Gửi 20/10 💌</title>
     <style>
         * {
             margin: 0;
@@ -16,12 +16,15 @@
         body {
             font-family: 'Noto Serif', 'Times New Roman', serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            min-height: 100svh; /* ổn định khi thanh địa chỉ thay đổi */
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
             position: relative;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            -webkit-text-size-adjust: 100%;
         }
 
         /* Hiệu ứng tim rơi */
@@ -45,12 +48,15 @@
 
         /* Container chính */
         .container {
-            position: relative;
-            width: 90vw;
-            max-width: 400px;
-            height: 300px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(92vw, 420px);
+            height: min(80svh, 640px);
             cursor: pointer;
             transition: transform 0.3s;
+            z-index: 10; /* phủ lên card khi đóng */
         }
 
         .container:active {
@@ -59,6 +65,8 @@
 
         .container.opened {
             cursor: default;
+            pointer-events: none;
+            z-index: 0; /* sau khi mở, cho xuống dưới card */
         }
 
         .container.opened:active {
@@ -75,9 +83,9 @@
         .envelope-back {
             position: absolute;
             width: 100%;
-            height: 200px;
+            height: 100%;
             background: #f9e4d4;
-            border-radius: 0 0 20px 20px;
+            border-radius: 18px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             top: 0;
         }
@@ -106,10 +114,10 @@
         .envelope-front {
             position: absolute;
             width: 100%;
-            height: 200px;
+            height: 60%;
             background: #f9e4d4;
-            top: 150px;
-            border-radius: 0 0 20px 20px;
+            bottom: 0;
+            border-radius: 0 0 18px 18px;
             z-index: 50;
             transition: opacity 0.6s ease-in-out;
         }
@@ -119,21 +127,41 @@
             pointer-events: none;
         }
 
+        /* Lớp phủ che toàn bộ card để không thấy thư cho tới khi mở */
+        .envelope-cover {
+            position: absolute;
+            inset: 0;
+            background: #f9e4d4;
+            border-radius: 18px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            z-index: 40;
+            transition: opacity 0.6s ease-in-out;
+        }
+        .envelope.open .envelope-cover {
+            opacity: 0;
+            pointer-events: none;
+        }
+
         /* Lá thư - ẨN HOÀN TOÀN ban đầu */
         .letter {
             position: fixed;
             width: 90vw;
             max-width: 400px;
-            height: 80vh;
+            height: 80svh; /* dùng svh để tránh nhảy do UI trình duyệt */
             max-height: 600px;
             background: #fff;
             border-radius: 15px;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, 100%);
+            transform: translate3d(-50%, 100%, 0);
             box-shadow: 0 5px 30px rgba(0,0,0,0.2);
             padding: 30px 20px;
-            overflow-y: auto;
+            overflow-y: scroll; /* giữ chỗ scrollbar để không đổi bề rộng khi gõ */
+            scrollbar-gutter: stable both-edges;
+            contain: layout paint; /* cô lập layout để tránh dội */
+            will-change: transform;
+            backface-visibility: hidden;
+            overflow-anchor: none;
             z-index: 5;
             opacity: 0;
             transition: all 0.8s ease-in-out;
@@ -141,15 +169,26 @@
         }
 
         .envelope.open .letter {
-            transform: translate(-50%, -50%);
+            transform: translate3d(-50%, -50%, 0);
             opacity: 1;
             z-index: 200;
+        }
+
+        /* Sau khi mở xong, cố định vị trí không dùng transform để tránh rung kích thước */
+        .letter.stable-center {
+            inset: 0;
+            margin: auto;
+            top: auto;
+            left: auto;
+            transform: none;
         }
 
         /* Nội dung thư */
         .letter-content {
             opacity: 0;
             transition: opacity 1s ease-in-out 0.8s;
+            contain: content;
+            overflow-anchor: none;
         }
 
         .envelope.open .letter-content {
@@ -171,11 +210,27 @@
         }
 
         .typing-text {
-            border-right: 2px solid #e63946;
-            white-space: nowrap;
+            white-space: pre-wrap;
             overflow: hidden;
+            display: block;
+            width: 100%;
+            word-break: break-word;
+        }
+
+        .typing-text::after {
+            content: '';
             display: inline-block;
-            animation: blink 0.7s step-end infinite;
+            width: 2px;
+            height: 1em;
+            background: #e63946;
+            margin-left: 2px;
+            animation: caretBlink 0.9s step-end infinite;
+            vertical-align: -0.1em;
+        }
+
+        @keyframes caretBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
         }
 
         @keyframes blink {
@@ -215,69 +270,116 @@
             pointer-events: none;
         }
 
-        /* Nút phát nhạc */
-        .music-control {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            background: rgba(255,255,255,0.9);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            transition: transform 0.3s;
-            font-size: 20px;
-            z-index: 1000;
-            -webkit-tap-highlight-color: transparent;
+        /* Ẩn chỉ hướng dẫn cũ; hiển thị phong bì như overlay */
+        .instruction { display: none; }
+        .container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; }
+        .container .letter { display: none; }
+
+        /* Thiết kế card ổn định mới */
+        .bg { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+        .bg .heart { position: absolute; will-change: transform, opacity; opacity: 0; }
+        @keyframes fall2 { 0%{opacity:1; transform: translateY(-10vh) rotate(0deg);} 100%{opacity:0; transform: translateY(110vh) rotate(360deg);} }
+
+        .card {
+            position: relative;
+            width: min(92vw, 420px);
+            height: min(80svh, 640px);
+            background: #ffffff;
+            border-radius: 18px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.28);
+            padding: 20px 18px 18px;
+            z-index: 1;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            scrollbar-gutter: stable both-edges;
+            contain: layout paint;
+            overflow-anchor: none;
         }
 
-        .music-control:active {
-            transform: scale(0.9);
-        }
+        .title { color: #e63946; text-align: center; font-size: 24px; margin-bottom: 12px; }
 
-        .music-control.playing {
-            animation: rotate 3s linear infinite;
-        }
+        .content { overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 6px; contain: content; }
 
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        /* Tối ưu cho màn hình nhỏ (iPhone) */
+        @media (max-width: 390px) {
+            .container {
+                height: 270px;
+            }
+
+            .letter {
+                padding: 20px 16px;
+                max-height: 70vh;
+            }
+
+            .letter h2 {
+                font-size: 20px;
+                margin-bottom: 16px;
+            }
+
+            .letter p {
+                font-size: 14px;
+                line-height: 1.7;
+                margin-bottom: 12px;
+            }
+
+            .instruction {
+                font-size: 15px;
+                bottom: -52px;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="bg" aria-hidden="true" id="bg"></div>
+
+    <main class="card" role="region" aria-label="Lá thư" style="z-index: 5;">
+        <h2 class="title">Thư Gửi 20/10</h2>
+        <section class="content">
+            <div class="typing-text" id="typing"></div>
+        </section>
+    </main>
+
+    <script>
+        (function initBackground() {
+            const bg = document.getElementById('bg');
+            if (!bg) return;
+            const HEARTS = 12;
+            for (let i = 0; i < HEARTS; i++) {
+                const el = document.createElement('div');
+                el.className = 'heart';
+                el.textContent = '❤️';
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.fontSize = (Math.random() * 18 + 14) + 'px';
+                const duration = (Math.random() * 4 + 6).toFixed(2);
+                el.style.animation = `fall2 ${duration}s linear ${Math.random().toFixed(2)}s infinite`;
+                bg.appendChild(el);
+            }
+        })();
+
+        let started = false;
+        function startTyping() {
+            const text = `Thân gửi em,\n\nDạo này anh thấy có vẻ em có chút mệt. Tuần rồi anh thấy em nghỉ học nhiều hơn, đi học muộn hơn nữa. Anh không đánh giá gì cả. Chỉ là anh cảm nhận em không giống bình thường một xíu. Anh thì hướng nội, giỏi nghe hơn là giỏi nói. Nếu em muốn kể những câu chuyện của mình, anh luôn ở đây và sẵn lòng lắng nghe.\n\nNay là 20/10, đầu tiên là chúc em đẹp gái. Tiếp là anh mong em trưởng thành, mạnh mẽ để đủ sức đối mặt với cuộc sống vốn không dễ dàng này. Sau cùng, mong thật nhiều may mắn sẽ đến với em.\n\nTối nay em đã có lịch đi chơi chưa? Nếu chưa, anh muốn mời em đi ăn tối.`;
+            const el = document.getElementById('typing');
+            if (!el) return;
+            const STEP_MS = 55;
+            let i = 0;
+            function type() {
+                if (i > text.length) return;
+                el.textContent = text.slice(0, i);
+                i++;
+                setTimeout(type, STEP_MS);
+            }
+            setTimeout(type, 300);
+        }
+    </script>
     <!-- Phong bì và thư -->
     <div class="container" id="envelope-container">
         <div class="envelope" id="envelope">
             <div class="envelope-back"></div>
             <div class="envelope-front"></div>
             <div class="envelope-flap"></div>
-            <div class="letter">
-                <div class="letter-content">
-                    <h2>Gửi Em Yêu Dấu 💕</h2>
-                    <p>Chào em của anh,</p>
-                    <p>Có lẽ anh không giỏi lắm trong việc bày tỏ cảm xúc bằng lời nói, nhưng hôm nay anh muốn viết những dòng này để em biết rằng em quan trọng với anh như thế nào.</p>
-                    <p>Mỗi ngày được ở bên em là một ngày tuyệt vời nhất. Nụ cười của em là động lực để anh cố gắng mỗi ngày. Giọng nói của em là giai điệu êm dịu nhất anh từng nghe.</p>
-                    <p>Anh biết đôi khi anh có thể hơi ngớ ngẩn, có thể làm em bực mình, nhưng điều duy nhất anh chắc chắn là:</p>
-                    <p><strong><span class="typing-text" id="typing">Đơn giản vì anh yêu em ❤️</span></strong></p>
-                    <p>Cảm ơn em đã đến bên anh. Anh hứa sẽ luôn cố gắng để trở thành phiên bản tốt nhất của chính mình, xứng đáng với em.</p>
-                    <div class="signature">
-                        Yêu em nhiều lắm,<br>
-                        Người của em 💝
-                    </div>
-                </div>
-            </div>
+            <div class="envelope-cover"></div>
         </div>
-        <div class="instruction" id="instruction">✨ Nhấn vào phong bì để mở thư nhé ✨</div>
-    </div>
-
-    <!-- Nút điều khiển nhạc -->
-    <div class="music-control" id="music-btn" title="Bật/Tắt nhạc">
-        🎵
     </div>
 
     <!-- Audio -->
@@ -306,7 +408,7 @@
         const container = document.getElementById('envelope-container');
         const instruction = document.getElementById('instruction');
         const music = document.getElementById('background-music');
-        const musicBtn = document.getElementById('music-btn');
+        const letterEl = document.querySelector('.letter');
         let isOpen = false;
         let isMusicPlaying = false;
 
@@ -314,51 +416,55 @@
             if (!isOpen) {
                 envelope.classList.add('open');
                 container.classList.add('opened');
-                instruction.classList.add('hidden');
+                if (instruction) instruction.classList.add('hidden');
                 isOpen = true;
                 
                 // Tự động phát nhạc khi mở thư
                 setTimeout(() => {
                     music.play().then(() => {
                         isMusicPlaying = true;
-                        musicBtn.classList.add('playing');
                     }).catch(e => {
                         console.log('Autoplay bị chặn, cần tương tác người dùng');
                     });
                 }, 800);
                 
-                // Hiệu ứng đánh máy
+                // Bắt đầu gõ nội dung mới (thiết kế card)
+                if (!started) {
+                    started = true;
+                    setTimeout(() => { startTyping(); }, 600);
+                }
+
+                // Sau khi mở xong, bỏ transform để cố định vị trí (tránh rung)
+                // Khi mở xong, đưa phong bì xuống dưới card để không che thư
                 setTimeout(() => {
-                    typeWriter();
-                }, 1500);
+                    container.classList.add('opened');
+                }, 650);
             }
         });
 
-        // Điều khiển nhạc
-        musicBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            if (isMusicPlaying) {
-                music.pause();
-                musicBtn.classList.remove('playing');
-                musicBtn.innerHTML = '🔇';
-            } else {
-                music.play();
-                musicBtn.classList.add('playing');
-                musicBtn.innerHTML = '🎵';
-            }
-            isMusicPlaying = !isMusicPlaying;
-        });
+        // Bỏ nút phát nhạc; nhạc chỉ phát khi mở thư
 
         // Hiệu ứng đánh máy
         function typeWriter() {
-            const text = "Đơn giản vì anh yêu em ❤️";
+            const text = `Thân gửi em,
+
+Dạo này anh thấy có vẻ em có chút mệt. Tuần rồi anh thấy em nghỉ học nhiều hơn, đi học muộn hơn nữa. Anh không đánh giá gì cả. Chỉ là anh cảm nhận em không giống bình thường một xíu. Anh thì hướng nội, giỏi nghe hơn là giỏi nói. Nếu em muốn kể những câu chuyện của mình, anh luôn ở đây và sẵn lòng lắng nghe.
+
+Nay là 20/10, đầu tiên là chúc em đẹp gái. Tiếp là anh mong em trưởng thành, mạnh mẽ để đủ sức đối mặt với cuộc sống vốn không dễ dàng này. Sau cùng, mong thật nhiều may mắn sẽ đến với em.
+
+Tối nay em đã có lịch đi chơi chưa? Nếu chưa, anh muốn mời em đi ăn tối.`;
             const element = document.getElementById('typing');
             element.innerHTML = '';
             let i = 0;
             
             function type() {
                 if (i < text.length) {
-                    element.innerHTML += text.charAt(i);
+                    const char = text.charAt(i);
+                    if (char === '\n') {
+                        element.innerHTML += '\n';
+                    } else {
+                        element.innerHTML += char;
+                    }
                     i++;
                     setTimeout(type, 100);
                 }
