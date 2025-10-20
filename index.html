@@ -56,7 +56,10 @@
             height: min(80svh, 640px);
             cursor: pointer;
             transition: transform 0.3s;
-            z-index: 10; /* phủ lên card khi đóng */
+            z-index: 1000; /* phủ lên card khi đóng - ưu tiên cao trên mobile */
+            background: #f9e4d4; /* nền cùng màu phong bì để che kín */
+            border-radius: 18px;
+            overflow: hidden; /* tránh hở mép do bo góc hoặc rounding */
         }
 
         .container:active {
@@ -92,34 +95,29 @@
 
         .envelope-flap {
             position: absolute;
-            width: 0;
-            height: 0;
-            border-left: 45vw solid transparent;
-            border-right: 45vw solid transparent;
-            border-bottom: 33.75vw solid #f4d0b8;
-            max-width: 200px;
-            max-height: 150px;
-            transform-origin: top center;
-            transition: transform 0.6s ease-in-out;
-            z-index: 100;
-            top: 0;
+            width: 100%;
+            height: 46%;
             left: 0;
+            top: 0;
+            background: #f4d0b8;
+            /* tam giác phủ toàn bộ phần trên */
+            -webkit-clip-path: polygon(50% 0, 100% 100%, 0 100%);
+            clip-path: polygon(50% 0, 100% 100%, 0 100%);
+            transform: none;
+            z-index: 100;
         }
 
-        .envelope.open .envelope-flap {
-            transform: rotateX(180deg);
-            z-index: 1;
-        }
+        .envelope.open .envelope-flap { z-index: 1; }
 
         .envelope-front {
             position: absolute;
             width: 100%;
-            height: 60%;
+            left: 0;
+            height: 62%;
             background: #f9e4d4;
             bottom: 0;
             border-radius: 0 0 18px 18px;
             z-index: 50;
-            transition: opacity 0.6s ease-in-out;
         }
 
         .envelope.open .envelope-front {
@@ -135,7 +133,7 @@
             border-radius: 18px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             z-index: 40;
-            transition: opacity 0.6s ease-in-out;
+            opacity: 1;
         }
         .envelope.open .envelope-cover {
             opacity: 0;
@@ -270,9 +268,13 @@
             pointer-events: none;
         }
 
-        /* Ẩn chỉ hướng dẫn cũ; hiển thị phong bì như overlay */
+        /* Ẩn chỉ hướng dẫn cũ; phong bì overlay đi cùng stage */
         .instruction { display: none; }
-        .container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; }
+        .stage { position: fixed; inset: 0; display: grid; place-items: center; }
+        .stage > * { box-sizing: border-box; }
+        .stage-inner { position: relative; width: min(92vw, 420px); height: min(80svh, 640px); }
+        .container { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2000; transform: none; }
+        .container.hidden { display: none; }
         .container .letter { display: none; }
 
         /* Thiết kế card ổn định mới */
@@ -281,9 +283,10 @@
         @keyframes fall2 { 0%{opacity:1; transform: translateY(-10vh) rotate(0deg);} 100%{opacity:0; transform: translateY(110vh) rotate(360deg);} }
 
         .card {
-            position: relative;
-            width: min(92vw, 420px);
-            height: min(80svh, 640px);
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
             background: #ffffff;
             border-radius: 18px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.28);
@@ -294,11 +297,38 @@
             scrollbar-gutter: stable both-edges;
             contain: layout paint;
             overflow-anchor: none;
+            overflow: hidden;
         }
+
+        .card.hidden { visibility: hidden; }
 
         .title { color: #e63946; text-align: center; font-size: 24px; margin-bottom: 12px; }
 
-        .content { overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 6px; contain: content; }
+        .content { overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 6px; contain: content; min-height: 0; }
+
+        /* Cải thiện hiển thị cho màn nhỏ (chiều ngang hẹp) */
+        @media (max-width: 360px) {
+            .stage-inner { width: 96vw; height: min(82svh, 600px); }
+            .card { padding: 16px 14px; border-radius: 16px; }
+            .title { font-size: 20px; margin-bottom: 10px; }
+            .content { padding-right: 4px; }
+            .typing-text { font-size: 14px; line-height: 1.7; }
+        }
+
+        /* Màn rất nhỏ/ thấp (iPhone SE landscape hoặc máy nhỏ) */
+        @media (max-width: 320px), (max-height: 600px) {
+            .stage-inner { width: 98vw; height: 86svh; }
+            .card { padding: 12px 12px; border-radius: 14px; }
+            .title { font-size: 18px; margin-bottom: 8px; }
+            .typing-text { font-size: 13px; line-height: 1.6; }
+            .typing-text::after { height: 0.9em; }
+            .bg { opacity: 0.5; }
+        }
+
+        /* Ẩn hiệu ứng nền trên màn siêu nhỏ để tập trung không gian cho nội dung */
+        @media (max-height: 520px) {
+            .bg { display: none; }
+        }
 
         /* Tối ưu cho màn hình nhỏ (iPhone) */
         @media (max-width: 390px) {
@@ -332,14 +362,37 @@
 <body>
     <div class="bg" aria-hidden="true" id="bg"></div>
 
-    <main class="card" role="region" aria-label="Lá thư" style="z-index: 5;">
-        <h2 class="title">Thư Gửi 20/10</h2>
-        <section class="content">
-            <div class="typing-text" id="typing"></div>
-        </section>
-    </main>
+    <section class="stage" aria-label="Khung thư">
+        <div class="stage-inner">
+        <main class="card" role="region" aria-label="Lá thư" style="z-index: 5;">
+            <h2 class="title">Thư Gửi 20/10</h2>
+            <section class="content">
+                <div class="typing-text" id="typing"></div>
+            </section>
+        </main>
+
+        <!-- Phong bì overlay cùng kích thước stage -->
+        <div class="container" id="envelope-container">
+            <div class="envelope" id="envelope">
+                <div class="envelope-back"></div>
+                <div class="envelope-front"></div>
+                <div class="envelope-flap"></div>
+                <div class="envelope-cover"></div>
+            </div>
+        </div>
+        </div>
+    </section>
 
     <script>
+        // Khóa kích thước stage-inner theo px để tránh thay đổi trong phiên
+        document.addEventListener('DOMContentLoaded', () => {
+            const stageInner = document.querySelector('.stage-inner');
+            if (stageInner) {
+                const rect = stageInner.getBoundingClientRect();
+                stageInner.style.width = Math.round(rect.width) + 'px';
+                stageInner.style.height = Math.round(rect.height) + 'px';
+            }
+        });
         (function initBackground() {
             const bg = document.getElementById('bg');
             if (!bg) return;
@@ -372,15 +425,7 @@
             setTimeout(type, 300);
         }
     </script>
-    <!-- Phong bì và thư -->
-    <div class="container" id="envelope-container">
-        <div class="envelope" id="envelope">
-            <div class="envelope-back"></div>
-            <div class="envelope-front"></div>
-            <div class="envelope-flap"></div>
-            <div class="envelope-cover"></div>
-        </div>
-    </div>
+    
 
     <!-- Audio -->
     <audio id="background-music" loop>
@@ -414,8 +459,9 @@
 
         container.addEventListener('click', function() {
             if (!isOpen) {
+                // Ẩn phong bì ngay lập tức, không hiệu ứng dịch chuyển
+                container.classList.add('hidden');
                 envelope.classList.add('open');
-                container.classList.add('opened');
                 if (instruction) instruction.classList.add('hidden');
                 isOpen = true;
                 
@@ -426,19 +472,13 @@
                     }).catch(e => {
                         console.log('Autoplay bị chặn, cần tương tác người dùng');
                     });
-                }, 800);
+                }, 0);
                 
                 // Bắt đầu gõ nội dung mới (thiết kế card)
                 if (!started) {
                     started = true;
-                    setTimeout(() => { startTyping(); }, 600);
+                    setTimeout(() => { startTyping(); }, 0);
                 }
-
-                // Sau khi mở xong, bỏ transform để cố định vị trí (tránh rung)
-                // Khi mở xong, đưa phong bì xuống dưới card để không che thư
-                setTimeout(() => {
-                    container.classList.add('opened');
-                }, 650);
             }
         });
 
